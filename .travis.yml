@@ -7,3 +7,5 @@ install:
   - go get github.com/kardianos/osext
   - go get github.com/ttacon/chalk
   - go get github.com/apcera/termtables
+
+script: go build -v
