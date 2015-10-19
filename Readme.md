@@ -1,3 +1,6 @@
+[![Build
+Status](https://travis-ci.org/RodolpheFouquet/git-stats.svg?branch=master)](https://travis-ci.org/RodolpheFouquet/git-stats)
+
 # Git-stats
 
 Dumps the number of additions and deletions from a repostory or a
