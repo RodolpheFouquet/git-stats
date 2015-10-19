@@ -76,6 +76,11 @@ func ParseStats(gitOutput, subtree string) (map[string]*Contributor, error) {
 			}
 		default:
 			splittedLine := strings.Split(lineString, "\t")
+			if len(splittedLine) != 3 {
+				fmt.Println(chalk.Yellow, "Warning: insufficient number on fields detected, skipping commit line")
+				continue
+			}
+
 			pathModified := fmt.Sprintf("/%s", splittedLine[2])
 			rel, err := filepath.Rel(subtree, pathModified)
 			if err != nil {
@@ -86,7 +91,6 @@ func ParseStats(gitOutput, subtree string) (map[string]*Contributor, error) {
 				continue
 			}
 
-			fmt.Println(subtree, pathModified, rel)
 			additions, err := strconv.Atoi(splittedLine[0])
 			if err != nil {
 				fmt.Println(chalk.Yellow, "Warning: ", err)
