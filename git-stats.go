@@ -8,6 +8,7 @@ import (
 	"github.com/ttacon/chalk"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -32,10 +33,12 @@ func PrintHelp(success bool) {
 		color = chalk.Red
 	}
 	fmt.Println(color, "Usage: ", execname, "repo_path", "subtree")
+	fmt.Println(color, "\tExample: ", execname, "repo_path ", "/", " will give the stats for the whole repository")
+	fmt.Println(color, "\tExample: ", execname, "repo_path ", "/module1/src", " will give the stats for the module1/src subpath")
 }
 
 func ExecGit(repo string) (string, error) {
-	command := exec.Command("git", "-C", "/home/tamareu/Code/gpac", "log", "--numstat", "--pretty='%an'")
+	command := exec.Command("git", "-C", repo, "log", "--numstat", "--pretty='%an'")
 	fmt.Println("Gathering the stats in the repo", repo)
 	out, err := command.CombinedOutput()
 	if err != nil {
@@ -47,7 +50,7 @@ func ExecGit(repo string) (string, error) {
 	return string(out), nil
 }
 
-func ParseStats(gitOutput string) (map[string]*Contributor, error) {
+func ParseStats(gitOutput, subtree string) (map[string]*Contributor, error) {
 	fmt.Println("Parsing the stats from the repo")
 	contributors := make(map[string]*Contributor)
 	reader := bufio.NewReader(strings.NewReader(gitOutput))
@@ -73,6 +76,17 @@ func ParseStats(gitOutput string) (map[string]*Contributor, error) {
 			}
 		default:
 			splittedLine := strings.Split(lineString, "\t")
+			pathModified := fmt.Sprintf("/%s", splittedLine[2])
+			rel, err := filepath.Rel(subtree, pathModified)
+			if err != nil {
+				fmt.Println(chalk.Yellow, "Warning: ", err)
+				continue
+			}
+			if strings.Contains(rel, "..") {
+				continue
+			}
+
+			fmt.Println(subtree, pathModified, rel)
 			additions, err := strconv.Atoi(splittedLine[0])
 			if err != nil {
 				fmt.Println(chalk.Yellow, "Warning: ", err)
@@ -107,7 +121,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	contributors, err := ParseStats(gitOutput)
+	contributors, err := ParseStats(gitOutput, os.Args[2])
 
 	separator := strings.Repeat("#", 80)
 	fmt.Println(chalk.Green, separator)
