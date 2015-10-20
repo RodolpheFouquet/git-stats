@@ -14,5 +14,6 @@ deploy:
     - git-stats-linux.tar.gz
     - git-stats-darwin.tar.gz
     - git-stats-win32.zip
+  skip_cleanup: true
   on:
     repo: RodolpheFouquet/git-stats
