@@ -3,13 +3,9 @@ language: go
 go:
   - tip
 
-os:
-  - linux
-  - osx
-
 install:
   - go get github.com/kardianos/osext
   - go get github.com/ttacon/chalk
-  - go get github.com/apcera/termtables
+  - go get github.com/RodolpheFouquet/termtables
 
 script: make

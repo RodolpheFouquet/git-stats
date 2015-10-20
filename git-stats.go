@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/apcera/termtables"
+	"github.com/RodolpheFouquet/termtables"
 	"github.com/kardianos/osext"
 	"github.com/ttacon/chalk"
 	"os"
