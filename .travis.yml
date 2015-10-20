@@ -1,11 +1,18 @@
 language: go
-
 go:
-  - tip
-
+- tip
 install:
-  - go get github.com/kardianos/osext
-  - go get github.com/ttacon/chalk
-  - go get github.com/RodolpheFouquet/termtables
-
+- go get github.com/kardianos/osext
+- go get github.com/ttacon/chalk
+- go get github.com/RodolpheFouquet/termtables
 script: make
+deploy:
+  provider: releases
+  api_key:
+    secure: IxOXpbHpRWkkm7jalobNFZ8kcM1MLbxUuQy1SU2cOZvqQjcSjzv9ofwuUJlXn5TjR2lS4qTbHchobCkib5EaB4WBFgkd8cXCdAmxJ1wMzVaUwG+AO2Vpn4uUPVdV/xSjmMslyMOUUjsgly0xQ9NW8kmmdp8UFtiXzW10QiCPRyz3E/vkhgma2TRF0BCmQ3/lcsOtd+r9fZPHkBxVZDDOTUlZ6DrwjEWESzXvGaiw/6CgdkFJS/UDft0It3xMMY8zg5JmzEo6SMFX7W+ruxyOAf5mqGuXdSaGYhRTKEmuK30SeDLgW19f8spkDME/eU+dwvW3GUAZeVuUEom++5ljY4dObJMXKwt6qlnEqdnp/w3HzyXSn4smBYC725GOP4MQqw1teyJQTSebG2KIAl/s6MCNNTiDQ1F5e7Kd9rELjIJgSdp1ZNtPQzoF66aAjxnjNlCwXhDjkVfL5xmYblj9fAFN6Vg2zT5YVuqyljiYps2DrjEVWeKGQDnLMnp+fwa0UEWxxa45sgyFTxv6SMDSfuFu7eYFd9mCBT0hyzX1wATqmh2/2BKhPqN4kzCTwTrHXrYeVqpuVOiN3m9mKpJUiQXmLP9FHc3KfnucC+adY3n+rloQKyYNpa5bcJVUpB96ZCbNOqbNmfLk8BqHjGjCJ4JRxPqwQq/U1HJl3zSUCxY=
+  file:
+    - git-stats-linux.tar.gz
+    - git-stats-darwin.tar.gz
+    - git-stats-win32.zip
+  on:
+    repo: RodolpheFouquet/git-stats
