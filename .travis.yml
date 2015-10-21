@@ -16,4 +16,5 @@ deploy:
     - git-stats-win32.zip
   skip_cleanup: true
   on:
+    tags: true
     repo: RodolpheFouquet/git-stats
