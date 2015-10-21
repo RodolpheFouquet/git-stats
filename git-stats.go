@@ -17,6 +17,11 @@ type Contributor struct {
 	Name      string
 	Additions int
 	Deletions int
+	Commits   int
+}
+
+func NewContributor(name string) *Contributor {
+	return &Contributor{Name: name, Additions: 0, Deletions: 0, Commits: 0}
 }
 
 func (c *Contributor) IncrementCounters(additions, deletions int) {
@@ -55,6 +60,7 @@ func ParseStats(gitOutput, subtree string) (map[string]*Contributor, error) {
 	contributors := make(map[string]*Contributor)
 	reader := bufio.NewReader(strings.NewReader(gitOutput))
 	currentContributor := ""
+	hasContributed := false
 	for {
 		line, _, err := reader.ReadLine()
 		if err != nil {
@@ -72,8 +78,9 @@ func ParseStats(gitOutput, subtree string) (map[string]*Contributor, error) {
 			currentContributor = strings.Replace(lineString, "'", "", -1)
 			_, exists := contributors[currentContributor]
 			if !exists {
-				contributors[currentContributor] = &Contributor{Name: currentContributor, Additions: 0, Deletions: 0}
+				contributors[currentContributor] = NewContributor(currentContributor)
 			}
+			hasContributed = false
 		default:
 			splittedLine := strings.Split(lineString, "\t")
 			if len(splittedLine) != 3 {
@@ -100,6 +107,10 @@ func ParseStats(gitOutput, subtree string) (map[string]*Contributor, error) {
 			if err != nil {
 				fmt.Println(chalk.Yellow, "Warning: ", err)
 				continue
+			}
+			if !hasContributed {
+				hasContributed = true
+				contributors[currentContributor].Commits++
 			}
 			contributors[currentContributor].IncrementCounters(additions, deletions)
 		}
@@ -133,9 +144,9 @@ func main() {
 	fmt.Println(chalk.Green, separator)
 	fmt.Println("")
 	table := termtables.CreateTable()
-	table.AddHeaders("Contributor", "Additions", "Deletions")
+	table.AddHeaders("Contributor", "Additions", "Deletions", "Commits")
 	for _, v := range contributors {
-		table.AddRow(v.Name, v.Additions, v.Deletions)
+		table.AddRow(v.Name, v.Additions, v.Deletions, v.Commits)
 	}
 
 	fmt.Println(table.Render())

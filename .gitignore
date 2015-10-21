@@ -3,3 +3,4 @@ git-stats
 git-stats-darwin.tar.gz
 git-stats-linux.tar.gz
 git-stats-win32.zip
+.DS_Store
