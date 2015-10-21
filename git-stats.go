@@ -29,6 +29,39 @@ func (c *Contributor) IncrementCounters(additions, deletions int) {
 	c.Deletions = deletions + c.Deletions
 }
 
+type Report struct {
+	Contributors   map[string]*Contributor
+	TotalAdditions int
+	TotalDeletions int
+	TotalCommits   int
+}
+
+func NewReport() *Report {
+	return &Report{Contributors: make(map[string]*Contributor), TotalAdditions: 0, TotalDeletions: 0, TotalCommits: 0}
+}
+
+func (r *Report) HasContributor(name string) bool {
+	_, exists := r.Contributors[name]
+	return exists
+}
+
+func (r *Report) AddContributor(name string) {
+	if !r.HasContributor(name) {
+		r.Contributors[name] = NewContributor(name)
+	}
+}
+
+func (r *Report) IncrementCounters(name string, additions, deletions int) {
+	r.Contributors[name].IncrementCounters(additions, deletions)
+	r.TotalAdditions += additions
+	r.TotalDeletions += deletions
+}
+
+func (r *Report) IncrementCommits(name string) {
+	r.Contributors[name].Commits++
+	r.TotalCommits++
+}
+
 func PrintHelp(success bool) {
 	execname, _ := osext.Executable()
 	var color chalk.Color
@@ -55,9 +88,9 @@ func ExecGit(repo string) (string, error) {
 	return string(out), nil
 }
 
-func ParseStats(gitOutput, subtree string) (map[string]*Contributor, error) {
+func ParseStats(gitOutput, subtree string) (*Report, error) {
 	fmt.Println("Parsing the stats from the repo")
-	contributors := make(map[string]*Contributor)
+	report := NewReport()
 	reader := bufio.NewReader(strings.NewReader(gitOutput))
 	currentContributor := ""
 	hasContributed := false
@@ -75,10 +108,7 @@ func ParseStats(gitOutput, subtree string) (map[string]*Contributor, error) {
 
 		if len(splittedLine) == 1 {
 			currentContributor = strings.Replace(lineString, "'", "", -1)
-			_, exists := contributors[currentContributor]
-			if !exists {
-				contributors[currentContributor] = NewContributor(currentContributor)
-			}
+			report.AddContributor(currentContributor)
 			hasContributed = false
 		} else if len(splittedLine) == 3 {
 			pathModified := fmt.Sprintf("/%s", splittedLine[2])
@@ -92,20 +122,21 @@ func ParseStats(gitOutput, subtree string) (map[string]*Contributor, error) {
 
 			additions, err := strconv.Atoi(splittedLine[0])
 			if err != nil {
-				additions = 0
+				continue
 			}
 			deletions, err := strconv.Atoi(splittedLine[1])
 			if err != nil {
-				deletions = 0
+				continue
 			}
+
 			if !hasContributed {
 				hasContributed = true
-				contributors[currentContributor].Commits++
+				report.IncrementCommits(currentContributor)
 			}
-			contributors[currentContributor].IncrementCounters(additions, deletions)
+			report.IncrementCounters(currentContributor, additions, deletions)
 		}
 	}
-	return contributors, nil
+	return report, nil
 }
 
 func main() {
@@ -125,7 +156,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	contributors, err := ParseStats(gitOutput, os.Args[2])
+	report, err := ParseStats(gitOutput, os.Args[2])
 
 	separator := strings.Repeat("#", 80)
 	fmt.Println(chalk.Green, separator)
@@ -134,8 +165,10 @@ func main() {
 	fmt.Println("")
 	table := termtables.CreateTable()
 	table.AddHeaders("Contributor", "Additions", "Deletions", "Commits")
-	for _, v := range contributors {
-		table.AddRow(v.Name, v.Additions, v.Deletions, v.Commits)
+	for _, v := range report.Contributors {
+		if v.Commits > 0 {
+			table.AddRow(v.Name, v.Additions, v.Deletions, v.Commits)
+		}
 	}
 
 	fmt.Println(table.Render())
