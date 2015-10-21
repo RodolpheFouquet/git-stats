@@ -71,28 +71,20 @@ func ParseStats(gitOutput, subtree string) (map[string]*Contributor, error) {
 			continue
 		}
 
-		switch lineString[0] {
-		case '-':
-			continue
-		case '\'':
+		splittedLine := strings.Split(lineString, "\t")
+
+		if len(splittedLine) == 1 {
 			currentContributor = strings.Replace(lineString, "'", "", -1)
 			_, exists := contributors[currentContributor]
 			if !exists {
 				contributors[currentContributor] = NewContributor(currentContributor)
 			}
 			hasContributed = false
-		default:
-			splittedLine := strings.Split(lineString, "\t")
-			if len(splittedLine) != 3 {
-				fmt.Println(chalk.Yellow, "Warning: insufficient number on fields detected, skipping commit line")
-				continue
-			}
-
+		} else if len(splittedLine) == 3 {
 			pathModified := fmt.Sprintf("/%s", splittedLine[2])
 			rel, err := filepath.Rel(subtree, pathModified)
 			if err != nil {
-				fmt.Println(chalk.Yellow, "Warning: ", err)
-				continue
+				fmt.Println(chalk.Yellow, "Relative Warning: ", err)
 			}
 			if strings.Contains(rel, "..") {
 				continue
@@ -100,13 +92,11 @@ func ParseStats(gitOutput, subtree string) (map[string]*Contributor, error) {
 
 			additions, err := strconv.Atoi(splittedLine[0])
 			if err != nil {
-				fmt.Println(chalk.Yellow, "Warning: ", err)
-				continue
+				additions = 0
 			}
 			deletions, err := strconv.Atoi(splittedLine[1])
 			if err != nil {
-				fmt.Println(chalk.Yellow, "Warning: ", err)
-				continue
+				deletions = 0
 			}
 			if !hasContributed {
 				hasContributed = true
@@ -114,7 +104,6 @@ func ParseStats(gitOutput, subtree string) (map[string]*Contributor, error) {
 			}
 			contributors[currentContributor].IncrementCounters(additions, deletions)
 		}
-
 	}
 	return contributors, nil
 }
