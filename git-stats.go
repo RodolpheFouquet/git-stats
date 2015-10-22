@@ -9,15 +9,19 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 )
 
 type Contributor struct {
-	Name      string
-	Additions int
-	Deletions int
-	Commits   int
+	Name            string
+	Additions       int
+	Deletions       int
+	Commits         int
+	CommitScore     float32
+	AdditionScore   float32
+	DifferenceScore float32
 }
 
 func NewContributor(name string) *Contributor {
@@ -27,6 +31,16 @@ func NewContributor(name string) *Contributor {
 func (c *Contributor) IncrementCounters(additions, deletions int) {
 	c.Additions = additions + c.Additions
 	c.Deletions = deletions + c.Deletions
+}
+
+func (c *Contributor) GetScore() float32 {
+	return 0.8*c.DifferenceScore + 0.1*c.AdditionScore + 0.1*c.CommitScore
+}
+
+func (c *Contributor) SetScores(difference, addition, commits float32) {
+	c.DifferenceScore = difference
+	c.AdditionScore = addition
+	c.CommitScore = commits
 }
 
 type Report struct {
@@ -139,6 +153,12 @@ func ParseStats(gitOutput, subtree string) (*Report, error) {
 	return report, nil
 }
 
+type OrderByScore []Contributor
+
+func (a OrderByScore) Len() int           { return len(a) }
+func (a OrderByScore) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a OrderByScore) Less(i, j int) bool { return a[i].GetScore() < a[j].GetScore() }
+
 func main() {
 	if len(os.Args) == 2 && os.Args[1] == "--help" {
 		PrintHelp(true)
@@ -164,12 +184,28 @@ func main() {
 	fmt.Println(chalk.Green, separator)
 	fmt.Println("")
 	table := termtables.CreateTable()
-	table.AddHeaders("Contributor", "Additions", "Deletions", "Commits")
+	table.AddHeaders("Contributor", "Additions - Deletions", "Additions", "Commits", "Score")
+	contributors := make([]Contributor, 0)
 	for _, v := range report.Contributors {
 		if v.Commits > 0 {
-			table.AddRow(v.Name, v.Additions, v.Deletions, v.Commits)
+			differenceScore := float32(v.Additions-v.Deletions) * 100.0 / float32(report.TotalAdditions-report.TotalDeletions)
+			additionScore := float32(v.Additions) * 100.0 / float32(report.TotalAdditions)
+			commitScore := float32(v.Commits) * 100.0 / float32(report.TotalCommits)
+			v.SetScores(differenceScore, additionScore, commitScore)
+			contributors = append(contributors, *v)
 		}
 	}
+	sort.Sort(OrderByScore(contributors))
+	for index := range contributors {
+		c := contributors[len(contributors)-index-1]
+		table.AddRow(c.Name, fmt.Sprintf("%.3f%%", c.DifferenceScore), fmt.Sprintf("%.3f%%", c.AdditionScore), fmt.Sprintf("%.3f%%", c.CommitScore), fmt.Sprintf("%.3f", c.GetScore()))
+	}
 
+	table.AddSeparator()
+	table.AddRow("Total", report.TotalAdditions, report.TotalDeletions, report.TotalCommits, "-----")
+	table.SetAlign(4, 2)
+	table.SetAlign(3, 3)
+	table.SetAlign(3, 4)
+	table.SetAlign(3, 5)
 	fmt.Println(table.Render())
 }
