@@ -203,7 +203,7 @@ func main() {
 
 	table.AddSeparator()
 	table.AddRow("Total", report.TotalAdditions, report.TotalDeletions, report.TotalCommits, "-----")
-	table.SetAlign(4, 2)
+	table.SetAlign(3, 2)
 	table.SetAlign(3, 3)
 	table.SetAlign(3, 4)
 	table.SetAlign(3, 5)
