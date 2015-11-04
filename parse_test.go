@@ -27,3 +27,11 @@ func TestIncrementCounters(t *testing.T) {
 	}
 
 }
+
+func TestNewContributor(t *testing.T) {
+	c := NewContributor("Pouet")
+
+	if c.Name != "Pouet" {
+		t.Errorf("The expected name was Pouet, however we got %v", c.Name)
+	}
+}
