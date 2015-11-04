@@ -60,3 +60,22 @@ func TestGetScores(t *testing.T) {
 		t.Errorf("The expected score was %v and we got %v", expectedScore, c.GetScore())
 	}
 }
+
+func TestHasContributor(t *testing.T) {
+	report := NewReport()
+
+	name := "Pouet"
+	if report.HasContributor(name) {
+		t.Errorf("The report shouldn't have any contributor")
+	}
+
+	report.AddContributor(name)
+	if !report.HasContributor(name) {
+		t.Errorf("The report should have the contributor %v", name)
+	}
+
+	if report.HasContributor("Pouetpouet") {
+		t.Error("Nah, this contributor wasn't added to the report!")
+	}
+
+}
