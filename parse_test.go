@@ -129,3 +129,44 @@ func TestIncrementReportCounters(t *testing.T) {
 		t.Errorf("Total Additions and Deletions should equal be to %v and %v", 2*addDiff, 2*delDiff)
 	}
 }
+
+func TestIncrementCommit(t *testing.T) {
+	r := NewReport()
+
+	name := "Pouet"
+	name2 := "Pouetpouet"
+	err := r.IncrementCommits(name)
+	if err == nil {
+		t.Errorf("Incrementing the commits of a non existing user should fail")
+	}
+
+	r.AddContributor(name)
+	c := r.Contributors[name]
+	err = r.IncrementCommits(name)
+	if err != nil {
+		t.Errorf("Incrementing the commits of an existing user should not fail")
+	}
+
+	if c.Commits != 1 {
+		t.Errorf("Failed to increment the contributor's commits")
+	}
+
+	if r.TotalCommits != 1 {
+		t.Errorf("The total number of commits should have been incremented")
+	}
+
+	r.AddContributor(name2)
+	c2 := r.Contributors[name2]
+	r.IncrementCommits(name2)
+	if c2.Commits != 1 {
+		t.Errorf("Failed to increment the contributor's commits")
+	}
+
+	if r.TotalCommits != 2 {
+		t.Errorf("The total number of commits should have been incremented")
+	}
+
+	if c.Commits != 1 {
+		t.Errorf("The number of the first contributor should remain at 1")
+	}
+}

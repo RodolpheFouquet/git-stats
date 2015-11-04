@@ -76,9 +76,13 @@ func (r *Report) IncrementCounters(name string, additions, deletions int) error 
 	return nil
 }
 
-func (r *Report) IncrementCommits(name string) {
+func (r *Report) IncrementCommits(name string) error {
+	if !r.HasContributor(name) {
+		return errors.New("This contributor does not exist")
+	}
 	r.Contributors[name].Commits++
 	r.TotalCommits++
+	return nil
 }
 
 func PrintHelp(success bool) {
