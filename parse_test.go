@@ -35,3 +35,13 @@ func TestNewContributor(t *testing.T) {
 		t.Errorf("The expected name was Pouet, however we got %v", c.Name)
 	}
 }
+
+func TestGetScores(t *testing.T) {
+	c := NewContributor("")
+
+	c.SetScores(80.0, 10.0, 50.0)
+	expectedScore := c.DifferenceScore*0.8 + c.AdditionScore*0.1 + c.CommitScore*0.1
+	if c.GetScore() != expectedScore {
+		t.Errorf("The expected score was %v and we got %v", expectedScore, c.GetScore())
+	}
+}
