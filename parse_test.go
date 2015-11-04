@@ -79,3 +79,53 @@ func TestHasContributor(t *testing.T) {
 	}
 
 }
+
+func TestIncrementReportCounters(t *testing.T) {
+	r := NewReport()
+	name := "Pouet"
+	err := r.IncrementCounters(name, 0, 0)
+
+	if err == nil {
+		t.Errorf("Incrementing a counter on a non existing contributor should return a valid error")
+	}
+
+	r.AddContributor(name)
+	c := r.Contributors[name]
+	err = r.IncrementCounters(name, 0, 0)
+	if err != nil {
+		t.Errorf("Incrementing a counter on a valid contributor should not return an error")
+	}
+	if c.Additions != 0 || c.Deletions != 0 {
+		t.Errorf("Contributor Additions and Deletions should still be at 0")
+	}
+
+	if r.TotalAdditions != 0 || r.TotalDeletions != 0 {
+		t.Errorf("Total Additions and Deletions should still be at 0")
+	}
+
+	addDiff := 10
+	delDiff := 9
+	r.IncrementCounters(name, addDiff, delDiff)
+	if c.Additions != addDiff || c.Deletions != delDiff {
+		t.Errorf("Contributor Additions and Deletions should be equal to %v and %v", addDiff, delDiff)
+	}
+
+	if r.TotalAdditions != addDiff || r.TotalDeletions != delDiff {
+		t.Errorf("Total Additions and Deletions should be equal to %v and %v", addDiff, delDiff)
+	}
+
+	name2 := "Pouetpouet"
+	r.AddContributor(name2)
+	c2 := r.Contributors[name2]
+	r.IncrementCounters(name2, addDiff, delDiff)
+	if c2.Additions != addDiff || c2.Deletions != delDiff {
+		t.Errorf("Contributor Additions and Deletions should be equal to %v and %v", addDiff, delDiff)
+	}
+
+	if c.Additions != addDiff || c.Deletions != delDiff {
+		t.Errorf("Contributor Additions and Deletions should be equal to %v and %v", addDiff, delDiff)
+	}
+	if r.TotalAdditions != 2*addDiff || r.TotalDeletions != 2*delDiff {
+		t.Errorf("Total Additions and Deletions should equal be to %v and %v", 2*addDiff, 2*delDiff)
+	}
+}

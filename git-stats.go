@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"github.com/RodolpheFouquet/termtables"
 	"github.com/kardianos/osext"
@@ -65,10 +66,14 @@ func (r *Report) AddContributor(name string) {
 	}
 }
 
-func (r *Report) IncrementCounters(name string, additions, deletions int) {
+func (r *Report) IncrementCounters(name string, additions, deletions int) error {
+	if !r.HasContributor(name) {
+		return errors.New("This contributor does not exist")
+	}
 	r.Contributors[name].IncrementCounters(additions, deletions)
 	r.TotalAdditions += additions
 	r.TotalDeletions += deletions
+	return nil
 }
 
 func (r *Report) IncrementCommits(name string) {
