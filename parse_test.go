@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"io/ioutil"
+	"testing"
+)
 
 func TestIncrementCounters(t *testing.T) {
 	c := NewContributor("dummy")
@@ -169,4 +172,146 @@ func TestIncrementCommit(t *testing.T) {
 	if c.Commits != 1 {
 		t.Errorf("The number of the first contributor should remain at 1")
 	}
+}
+
+func CheckContributors(report *Report, contributors []string) bool {
+	ret := true
+
+	for index := range contributors {
+		ret = ret && report.HasContributor(contributors[index])
+	}
+	return ret
+}
+
+func testParse(t *testing.T, file string) {
+	content, err := ioutil.ReadFile(file)
+	if err != nil {
+		t.Errorf("Could not read the test file %v", err)
+	}
+
+	report, err := ParseStats(string(content), "/")
+	if err != nil {
+		t.Errorf("Reading a valid git log should not return an error")
+	}
+	contributors := []string{"Contributor1", "Contributor2", "Contributor3"}
+	if !CheckContributors(report, contributors) {
+		t.Errorf("There's at least a missing contributor in the output")
+	}
+
+	numOfTotalCommits := 9 // there is a full binary commit
+
+	if report.TotalCommits != numOfTotalCommits {
+		t.Errorf("The total number of commits should be %v and it was %v", numOfTotalCommits, report.TotalCommits)
+	}
+	totalAdd := 189
+	totalDel := 8
+	if report.TotalAdditions != totalAdd {
+		t.Errorf("The total number of additions should be %v and it was %v", totalAdd, report.TotalAdditions)
+	}
+
+	if report.TotalDeletions != totalDel {
+		t.Errorf("The total number of deletions should be %v and it was %v", totalDel, report.TotalDeletions)
+	}
+
+	if report.Contributors["Contributor3"].Commits != 1 {
+		t.Errorf("Contributor3 should only have one commit")
+	}
+
+	if report.Contributors["Contributor1"].Commits != 6 {
+		t.Errorf("Contributor1 should have 6 commits")
+	}
+
+	if report.Contributors["Contributor2"].Commits != 2 {
+		t.Errorf("Contributor2 should have 2 commits")
+	}
+
+	if report.Contributors["Contributor3"].Additions != 1 {
+		t.Errorf("Contributor3 should only have one addition")
+	}
+
+	if report.Contributors["Contributor3"].Deletions != 1 {
+		t.Errorf("Contributor3 should only have one deletion")
+	}
+
+	if report.Contributors["Contributor1"].Additions != 159 {
+		t.Errorf("Contributor1 should have 159 additions")
+	}
+
+	if report.Contributors["Contributor1"].Deletions != 3 {
+		t.Errorf("Contributor1 should have 3 deletions")
+	}
+
+	if report.Contributors["Contributor2"].Additions != 29 {
+		t.Errorf("Contributor2 should have 29 additions")
+	}
+
+	if report.Contributors["Contributor2"].Deletions != 4 {
+		t.Errorf("Contributor2 should have 4 deletions")
+	}
+
+	report, err = ParseStats(string(content), "/test")
+	contributors = []string{"Contributor1", "Contributor2"}
+	if !CheckContributors(report, contributors) {
+		t.Errorf("There's at least a missing contributor in the output")
+	}
+
+	numOfTotalCommits = 7 // there is a full binary commit
+
+	if report.TotalCommits != numOfTotalCommits {
+		t.Errorf("The total number of commits should be %v and it was %v", numOfTotalCommits, report.TotalCommits)
+	}
+
+	totalAdd = 176
+	totalDel = 4
+	if report.TotalAdditions != totalAdd {
+		t.Errorf("The total number of additions should be %v and it was %v", totalAdd, report.TotalAdditions)
+	}
+
+	if report.TotalDeletions != totalDel {
+		t.Errorf("The total number of deletions should be %v and it was %v", totalDel, report.TotalDeletions)
+	}
+
+	if report.Contributors["Contributor2"].Commits != 2 {
+		t.Errorf("Contributor3 should have 2 commits")
+	}
+
+	if report.Contributors["Contributor1"].Commits != 5 {
+		t.Errorf("Contributor1 should have 5 commits")
+	}
+
+	if report.Contributors["Contributor1"].Additions != 147 {
+		t.Errorf("Contributor1 should have 147 additions")
+	}
+
+	if report.Contributors["Contributor1"].Deletions != 0 {
+		t.Errorf("Contributor1 should have 0 deletions")
+	}
+
+	if report.Contributors["Contributor2"].Additions != 29 {
+		t.Errorf("Contributor2 should have 29 additions")
+	}
+
+	if report.Contributors["Contributor2"].Deletions != 4 {
+		t.Errorf("Contributor2 should have 4 deletions")
+	}
+
+	report, err = ParseStats(string(content), "/tests")
+	if err != nil {
+		t.Errorf("%v", err)
+	}
+	if len(report.Contributors) != 0 {
+		t.Errorf("This path doesn't exist, there shouldn't be any contributor %v", len(report.Contributors))
+	}
+
+	if report.TotalCommits != 0 || report.TotalAdditions != 0 || report.TotalDeletions != 0 {
+		t.Errorf("This path does not exist, there should be no additions/deletions/commits")
+	}
+}
+
+func TestParseUnix(t *testing.T) {
+	testParse(t, "test_assets/test_gitlog.txt")
+}
+
+func TestParseWindows(t *testing.T) {
+	testParse(t, "test_assets/test_gitlogwin.txt")
 }

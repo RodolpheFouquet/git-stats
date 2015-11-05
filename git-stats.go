@@ -112,7 +112,7 @@ func ExecGit(repo string) (string, error) {
 }
 
 func ParseStats(gitOutput, subtree string) (*Report, error) {
-	fmt.Println("Parsing the stats from the repo")
+	fmt.Println("Parsing the stats from the repo using %v as subtree", subtree)
 	report := NewReport()
 	reader := bufio.NewReader(strings.NewReader(gitOutput))
 	currentContributor := ""
@@ -131,7 +131,6 @@ func ParseStats(gitOutput, subtree string) (*Report, error) {
 
 		if len(splittedLine) == 1 {
 			currentContributor = strings.Replace(lineString, "'", "", -1)
-			report.AddContributor(currentContributor)
 			hasContributed = false
 		} else if len(splittedLine) == 3 {
 			pathModified := fmt.Sprintf("/%s", splittedLine[2])
@@ -154,6 +153,7 @@ func ParseStats(gitOutput, subtree string) (*Report, error) {
 
 			if !hasContributed {
 				hasContributed = true
+				report.AddContributor(currentContributor)
 				report.IncrementCommits(currentContributor)
 			}
 			report.IncrementCounters(currentContributor, additions, deletions)

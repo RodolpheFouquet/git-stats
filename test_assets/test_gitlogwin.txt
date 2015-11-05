@@ -1,0 +1,33 @@
+'Contributor1'
+
+5	1	git-stats.go
+41	0	test/parse_test.go
+'Contributor1'
+
+6	1	git-stats.go
+50	0	test/parse_test.go
+'Contributor1
+
+19	0	test/parse_test.go
+'Contributor2'
+
+19	4	test/parse_test.go
+'Contributor1'
+
+1	1	.travis.yml
+'Contributor2'
+
+10	0	test/parse_test.go
+'Contributor1'
+
+8	0	test/parse_test.go
+'Contributor1'
+
+29	0	test/parse_test.go
+'Contributor3'
+
+1	1	git-stats.go
+-	-	screenshot.png
+'Contributor1'
+
+-	-	screenshot.png
