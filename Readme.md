@@ -3,6 +3,18 @@ Status](https://travis-ci.org/RodolpheFouquet/git-stats.svg?branch=master)](http
 
 # Git-stats
 
+## How to build:
+To install dependencies install gpm https://github.com/pote/gpm
+```
+wget https://raw.githubusercontent.com/pote/gpm/v1.4.0/bin/gpm && chmod
++x gpm && sudo mv gpm /usr/local/bin
+```
+
+And type
+```
+gpm install 
+```
+
 WORK IN PROGRESS
 
 Dumps the number of additions and deletions from a repostory or a
