@@ -7,6 +7,7 @@ import (
 	"github.com/RodolpheFouquet/termtables"
 	"github.com/kardianos/osext"
 	"github.com/ttacon/chalk"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,9 +21,9 @@ type Contributor struct {
 	Additions       int
 	Deletions       int
 	Commits         int
-	CommitScore     float32
-	AdditionScore   float32
-	DifferenceScore float32
+	CommitScore     float64
+	AdditionScore   float64
+	DifferenceScore float64
 }
 
 func NewContributor(name string) *Contributor {
@@ -34,11 +35,11 @@ func (c *Contributor) IncrementCounters(additions, deletions int) {
 	c.Deletions = deletions + c.Deletions
 }
 
-func (c *Contributor) GetScore() float32 {
+func (c *Contributor) GetScore() float64 {
 	return 0.8*c.DifferenceScore + 0.1*c.AdditionScore + 0.1*c.CommitScore
 }
 
-func (c *Contributor) SetScores(difference, addition, commits float32) {
+func (c *Contributor) SetScores(difference, addition, commits float64) {
 	c.DifferenceScore = difference
 	c.AdditionScore = addition
 	c.CommitScore = commits
@@ -197,9 +198,9 @@ func main() {
 	contributors := make([]Contributor, 0)
 	for _, v := range report.Contributors {
 		if v.Commits > 0 {
-			differenceScore := float32(v.Additions-v.Deletions) * 100.0 / float32(report.TotalAdditions-report.TotalDeletions)
-			additionScore := float32(v.Additions) * 100.0 / float32(report.TotalAdditions)
-			commitScore := float32(v.Commits) * 100.0 / float32(report.TotalCommits)
+			differenceScore := math.Abs(float64(v.Additions-v.Deletions)) * 100.0 / float64(report.TotalAdditions-report.TotalDeletions)
+			additionScore := float64(v.Additions) * 100.0 / float64(report.TotalAdditions)
+			commitScore := float64(v.Commits) * 100.0 / float64(report.TotalCommits)
 			v.SetScores(differenceScore, additionScore, commitScore)
 			contributors = append(contributors, *v)
 		}
