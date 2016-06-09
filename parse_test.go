@@ -42,7 +42,7 @@ func TestNewContributor(t *testing.T) {
 func TestSetScores(t *testing.T) {
 	c := NewContributor("")
 
-	var diffScore, addScore, commitScore float32
+	var diffScore, addScore, commitScore float64
 	diffScore = 80
 	addScore = 10
 	commitScore = 10
