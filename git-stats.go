@@ -44,8 +44,33 @@ type Period struct {
 	Alias string `json:"alias"`
 }
 
+type PeriodTS struct {
+	User string
+	Start time.Time
+	End   time.Time
+	Alias string
+}
+
 type PeriodArray struct {
 	Periods []Period `json:"periods"`
+}
+
+func  IsAfter(t, other time.Time) bool {
+	return t.Unix() < other.Unix()
+}
+
+func NewPeriodTS(period Period) *PeriodTS {
+	start, err := time.Parse("2006-01-02", period.Start)
+	if err != nil {
+		fmt.Println(chalk.Red, err)
+		return nil
+	}
+	stop, err := time.Parse("2006-01-02", period.Start)
+	if err != nil {
+		fmt.Println(chalk.Red, err)
+		return nil
+	}
+	return &PeriodTS{User: period.User, Start: start, End: stop, Alias: period.Alias}
 }
 
 func NewPeriodArray() *PeriodArray {
@@ -53,6 +78,10 @@ func NewPeriodArray() *PeriodArray {
 }
 
 func NewContribution(name string) *Contribution{
+	return &Contribution{Additions: 0, Deletions: 0, Commits: 0, Name: name}
+}
+
+func NewContributionDate(name, start, end, alias string) *Contribution{
 	return &Contribution{Additions: 0, Deletions: 0, Commits: 0, Name: name}
 }
 
@@ -91,13 +120,13 @@ func (r *Report) HasContributor(name string) bool {
 	return exists
 }
 
-func (r *Report) AddContributor(name string) {
+func (r *Report) AddContributor(name string, periodMap map[string]PeriodTS, date time.Time) {
 	if !r.HasContributor(name) {
 		r.Contributors[name] = NewContributor(name)
 	}
 }
 
-func (r *Report) IncrementCounters(name string, additions, deletions int) error {
+func (r *Report) IncrementCounters(name string, additions, deletions int, periodMap map[string]PeriodTS, date time.Time) error {
 	if !r.HasContributor(name) {
 		return errors.New("This contributor does not exist")
 	}
@@ -107,7 +136,7 @@ func (r *Report) IncrementCounters(name string, additions, deletions int) error 
 	return nil
 }
 
-func (r *Report) IncrementCommits(name string) error {
+func (r *Report) IncrementCommits(name string, periodMap map[string]PeriodTS, date time.Time) error {
 	if !r.HasContributor(name) {
 		return errors.New("This contributor does not exist")
 	}
@@ -130,9 +159,9 @@ func ExecGit(repo string) (string, error) {
 }
 
 func ParseStats(gitOutput, subtree string, periods PeriodArray) (*Report, error) {
-	periodMap := make(map[string]Period)
+	periodMap := make(map[string]PeriodTS)
 	for _, period := range periods.Periods {
-		periodMap[period.User] = period
+		periodMap[period.User] = *NewPeriodTS(period)
 	}
 	fmt.Println("Parsing the stats from the repo using %v as subtree", subtree)
 	report := NewReport()
@@ -176,14 +205,14 @@ func ParseStats(gitOutput, subtree string, periods PeriodArray) (*Report, error)
 				continue
 			}
 			
-			_,_ = time.Parse("Mon Jan 2 15:04:05 2006 -0700", timeString)
+			date,_ := time.Parse("Mon Jan 2 15:04:05 2006 -0700", timeString)
 				
 			if !hasContributed {
 				hasContributed = true
-				report.AddContributor(currentContributor)
-				report.IncrementCommits(currentContributor)
+				report.AddContributor(currentContributor, periodMap, date)
+				report.IncrementCommits(currentContributor, periodMap, date)
 			}
-			report.IncrementCounters(currentContributor, additions, deletions)
+			report.IncrementCounters(currentContributor, additions, deletions, periodMap, date)
 		}
 	}
 	return report, nil
