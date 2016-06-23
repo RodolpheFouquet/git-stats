@@ -1,33 +1,33 @@
-'Contributor1'
+'Contributor1|Mon May 30 22:08:53 2016 +0200'
 
 5	1	git-stats.go
 41	0	test/parse_test.go
-'Contributor1'
+'Contributor1|Mon May 30 22:08:53 2016 +0200'
 
 6	1	git-stats.go
 50	0	test/parse_test.go
-'Contributor1
+'Contributor1|Mon May 30 22:08:53 2016 +0200'
 
 19	0	test/parse_test.go
-'Contributor2'
+'Contributor2|Mon May 30 22:08:53 2016 +0200'
 
 19	4	test/parse_test.go
-'Contributor1'
+'Contributor1|Mon May 30 22:08:53 2016 +0200'
 
 1	1	.travis.yml
-'Contributor2'
+'Contributor2|Mon May 30 22:08:53 2016 +0200'
 
 10	0	test/parse_test.go
-'Contributor1'
+'Contributor1|Mon May 30 22:08:53 2016 +0200'
 
 8	0	test/parse_test.go
-'Contributor1'
+'Contributor1|Mon May 30 22:08:53 2016 +0200'
 
 29	0	test/parse_test.go
-'Contributor3'
+'Contributor3|Mon May 30 22:08:53 2016 +0200'
 
 1	1	git-stats.go
 -	-	screenshot.png
-'Contributor1'
+'Contributor1|Mon May 30 22:08:53 2016 +0200'
 
 -	-	screenshot.png

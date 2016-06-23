@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"errors"
+	"flag"
 	"fmt"
 	"github.com/RodolpheFouquet/termtables"
 	"github.com/kardianos/osext"
@@ -14,6 +15,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Contributor struct {
@@ -24,6 +26,16 @@ type Contributor struct {
 	CommitScore     float64
 	AdditionScore   float64
 	DifferenceScore float64
+	Alias           string
+	StartDate       time.Time
+	EndDate         time.Time
+}
+
+type Period struct {
+	User  string `json:"user"`
+	Start string `json:"start"`
+	End   string `json:"end"`
+	Alias string `json:"alias"`
 }
 
 func NewContributor(name string) *Contributor {
@@ -86,21 +98,8 @@ func (r *Report) IncrementCommits(name string) error {
 	return nil
 }
 
-func PrintHelp(success bool) {
-	execname, _ := osext.Executable()
-	var color chalk.Color
-	if success {
-		color = chalk.Green
-	} else {
-		color = chalk.Red
-	}
-	fmt.Println(color, "Usage: ", execname, "repo_path", "subtree")
-	fmt.Println(color, "\tExample: ", execname, "repo_path ", "/", " will give the stats for the whole repository")
-	fmt.Println(color, "\tExample: ", execname, "repo_path ", "/module1/src", " will give the stats for the module1/src subpath")
-}
-
 func ExecGit(repo string) (string, error) {
-	command := exec.Command("git", "-C", repo, "log", "--numstat", "--pretty='%an'")
+	command := exec.Command("git", "-C", repo, "log", "--numstat", "--pretty='%an|%ad'")
 	fmt.Println("Gathering the stats in the repo", repo)
 	out, err := command.CombinedOutput()
 	if err != nil {
@@ -131,7 +130,12 @@ func ParseStats(gitOutput, subtree string) (*Report, error) {
 		splittedLine := strings.Split(lineString, "\t")
 
 		if len(splittedLine) == 1 {
-			currentContributor = strings.Replace(lineString, "'", "", -1)
+			contribAndDate := strings.Split(lineString, "|")
+			currentContributor = strings.Replace(contribAndDate[0], "'", "", -1)
+			timeString := strings.Replace(contribAndDate[1], "'", "", -1)
+
+			date, _ := time.Parse("Mon Jan 2 15:04:05 2006 -0700", timeString)
+			fmt.Println(date)
 			hasContributed = false
 		} else if len(splittedLine) == 3 {
 			pathModified := fmt.Sprintf("/%s", splittedLine[2])
@@ -169,28 +173,50 @@ func (a OrderByScore) Len() int           { return len(a) }
 func (a OrderByScore) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a OrderByScore) Less(i, j int) bool { return a[i].GetScore() < a[j].GetScore() }
 
-func main() {
-	if len(os.Args) == 2 && os.Args[1] == "--help" {
-		PrintHelp(true)
-		os.Exit(0)
+func PrintHelp(success bool) {
+	execname, _ := osext.Executable()
+	var color chalk.Color
+	if success {
+		color = chalk.Green
+	} else {
+		color = chalk.Red
 	}
-
-	if len(os.Args) < 2 {
-		PrintHelp(false)
+	fmt.Println(color, "Usage: ", execname, "--repo=repo_path", "[options]")
+	flag.PrintDefaults()
+	if success {
+		os.Exit(0)
+	} else {
 		os.Exit(1)
 	}
+}
 
-	gitOutput, err := ExecGit(os.Args[1])
+func main() {
+
+	directory := flag.String("repo", "", "[mandatory] Path to the git repository")
+	subtree := flag.String("subtree", "/", "[optionnal] Subtree you want to parse")
+	config := flag.String("config", "", "[optionnal] Path to the configuration file")
+	help := flag.Bool("help", false, "[optionnal] Displays this helps and quit")
+
+	flag.Parse()
+	if *help {
+		PrintHelp(true)
+	}
+	if *directory == "" {
+		PrintHelp(false)
+	}
+	fmt.Println(*config)
+
+	gitOutput, err := ExecGit(*directory)
 	if err != nil {
 		fmt.Println(chalk.Red, err)
 		os.Exit(1)
 	}
 
-	report, err := ParseStats(gitOutput, os.Args[2])
+	report, err := ParseStats(gitOutput, *directory)
 
 	separator := strings.Repeat("#", 80)
 	fmt.Println(chalk.Green, separator)
-	fmt.Println(chalk.Green, "Summing up contributions for the repository ", os.Args[1], " subtree ", os.Args[2])
+	fmt.Println(chalk.Green, "Summing up contributions for the repository ", *directory, " subtree ", *subtree)
 	fmt.Println(chalk.Green, separator)
 	fmt.Println("")
 	table := termtables.CreateTable()
