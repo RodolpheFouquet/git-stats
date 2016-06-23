@@ -8,25 +8,25 @@ import (
 func TestIncrementCounters(t *testing.T) {
 	c := NewContributor("dummy")
 
-	c.IncrementCounters(1, 1)
+	c.Contributions[0].IncrementCounters(1, 1)
 
-	if c.Additions != 1 || c.Deletions != 1 {
-		t.Errorf("Additions and Deletions should be at 1 and the were %v, %v", c.Additions, c.Deletions)
+	if c.Contributions[0].Additions != 1 || c.Contributions[0].Deletions != 1 {
+		t.Errorf("Additions and Deletions should be at 1 and the were %v, %v", c.Contributions[0].Additions, c.Contributions[0].Deletions)
 	}
 
-	c.IncrementCounters(0, 0)
-	if c.Additions != 1 || c.Deletions != 1 {
-		t.Errorf("Additions and Deletions should be at 1 and the were %v, %v", c.Additions, c.Deletions)
+	c.Contributions[0].IncrementCounters(0, 0)
+	if c.Contributions[0].Additions != 1 || c.Contributions[0].Deletions != 1 {
+		t.Errorf("Additions and Deletions should be at 1 and the were %v, %v", c.Contributions[0].Additions, c.Contributions[0].Deletions)
 	}
 
-	c.IncrementCounters(5, 4)
-	if c.Additions != 6 || c.Deletions != 5 {
-		t.Errorf("Additions and Deletions should be at 6 and 5 and the were %v, %v", c.Additions, c.Deletions)
+	c.Contributions[0].IncrementCounters(5, 4)
+	if c.Contributions[0].Additions != 6 || c.Contributions[0].Deletions != 5 {
+		t.Errorf("Additions and Deletions should be at 6 and 5 and the were %v, %v", c.Contributions[0].Additions, c.Contributions[0].Deletions)
 	}
 
-	c.IncrementCounters(-5, -4)
-	if c.Additions != 1 || c.Deletions != 1 {
-		t.Errorf("Additions and Deletions should be at 1 and the were %v, %v", c.Additions, c.Deletions)
+	c.Contributions[0].IncrementCounters(-5, -4)
+	if c.Contributions[0].Additions != 1 || c.Contributions[0].Deletions != 1 {
+		t.Errorf("Additions and Deletions should be at 1 and the were %v, %v", c.Contributions[0].Additions, c.Contributions[0].Deletions)
 	}
 
 }
@@ -34,8 +34,8 @@ func TestIncrementCounters(t *testing.T) {
 func TestNewContributor(t *testing.T) {
 	c := NewContributor("Pouet")
 
-	if c.Name != "Pouet" {
-		t.Errorf("The expected name was Pouet, however we got %v", c.Name)
+	if c.Contributions[0].Name != "Pouet" {
+		t.Errorf("The expected name was Pouet, however we got %v", c.Contributions[0].Name)
 	}
 }
 
@@ -46,10 +46,10 @@ func TestSetScores(t *testing.T) {
 	diffScore = 80
 	addScore = 10
 	commitScore = 10
-	c.SetScores(diffScore, addScore, commitScore)
+	c.Contributions[0].SetScores(diffScore, addScore, commitScore)
 
-	if c.DifferenceScore != diffScore || c.AdditionScore != addScore || c.CommitScore != commitScore {
-		t.Errorf("The expected scored should be %v %v %v and were %v %v %v", diffScore, addScore, commitScore, c.DifferenceScore, c.AdditionScore, c.CommitScore)
+	if c.Contributions[0].DifferenceScore != diffScore || c.Contributions[0].AdditionScore != addScore || c.Contributions[0].CommitScore != commitScore {
+		t.Errorf("The expected scored should be %v %v %v and were %v %v %v", diffScore, addScore, commitScore, c.Contributions[0].DifferenceScore, c.Contributions[0].AdditionScore, c.Contributions[0].CommitScore)
 	}
 
 }
@@ -57,10 +57,10 @@ func TestSetScores(t *testing.T) {
 func TestGetScores(t *testing.T) {
 	c := NewContributor("")
 
-	c.SetScores(80.0, 10.0, 50.0)
-	expectedScore := c.DifferenceScore*0.8 + c.AdditionScore*0.1 + c.CommitScore*0.1
-	if c.GetScore() != expectedScore {
-		t.Errorf("The expected score was %v and we got %v", expectedScore, c.GetScore())
+	c.Contributions[0].SetScores(80.0, 10.0, 50.0)
+	expectedScore := c.Contributions[0].DifferenceScore*0.8 + c.Contributions[0].AdditionScore*0.1 + c.Contributions[0].CommitScore*0.1
+	if c.Contributions[0].GetScore() != expectedScore {
+		t.Errorf("The expected score was %v and we got %v", expectedScore, c.Contributions[0].GetScore())
 	}
 }
 
@@ -98,7 +98,7 @@ func TestIncrementReportCounters(t *testing.T) {
 	if err != nil {
 		t.Errorf("Incrementing a counter on a valid contributor should not return an error")
 	}
-	if c.Additions != 0 || c.Deletions != 0 {
+	if c.Contributions[0].Additions != 0 || c.Contributions[0].Deletions != 0 {
 		t.Errorf("Contributor Additions and Deletions should still be at 0")
 	}
 
@@ -109,7 +109,7 @@ func TestIncrementReportCounters(t *testing.T) {
 	addDiff := 10
 	delDiff := 9
 	r.IncrementCounters(name, addDiff, delDiff)
-	if c.Additions != addDiff || c.Deletions != delDiff {
+	if c.Contributions[0].Additions != addDiff || c.Contributions[0].Deletions != delDiff {
 		t.Errorf("Contributor Additions and Deletions should be equal to %v and %v", addDiff, delDiff)
 	}
 
@@ -121,11 +121,11 @@ func TestIncrementReportCounters(t *testing.T) {
 	r.AddContributor(name2)
 	c2 := r.Contributors[name2]
 	r.IncrementCounters(name2, addDiff, delDiff)
-	if c2.Additions != addDiff || c2.Deletions != delDiff {
+	if c2.Contributions[0].Additions != addDiff || c2.Contributions[0].Deletions != delDiff {
 		t.Errorf("Contributor Additions and Deletions should be equal to %v and %v", addDiff, delDiff)
 	}
 
-	if c.Additions != addDiff || c.Deletions != delDiff {
+	if c.Contributions[0].Additions != addDiff || c.Contributions[0].Deletions != delDiff {
 		t.Errorf("Contributor Additions and Deletions should be equal to %v and %v", addDiff, delDiff)
 	}
 	if r.TotalAdditions != 2*addDiff || r.TotalDeletions != 2*delDiff {
@@ -150,7 +150,7 @@ func TestIncrementCommit(t *testing.T) {
 		t.Errorf("Incrementing the commits of an existing user should not fail")
 	}
 
-	if c.Commits != 1 {
+	if c.Contributions[0].Commits != 1 {
 		t.Errorf("Failed to increment the contributor's commits")
 	}
 
@@ -161,7 +161,7 @@ func TestIncrementCommit(t *testing.T) {
 	r.AddContributor(name2)
 	c2 := r.Contributors[name2]
 	r.IncrementCommits(name2)
-	if c2.Commits != 1 {
+	if c2.Contributions[0].Commits != 1 {
 		t.Errorf("Failed to increment the contributor's commits")
 	}
 
@@ -169,7 +169,7 @@ func TestIncrementCommit(t *testing.T) {
 		t.Errorf("The total number of commits should have been incremented")
 	}
 
-	if c.Commits != 1 {
+	if c.Contributions[0].Commits != 1 {
 		t.Errorf("The number of the first contributor should remain at 1")
 	}
 }
@@ -189,7 +189,7 @@ func testParse(t *testing.T, file string) {
 		t.Errorf("Could not read the test file %v", err)
 	}
 
-	report, err := ParseStats(string(content), "/")
+	report, err := ParseStats(string(content), "/", *NewPeriodArray())
 	if err != nil {
 		t.Errorf("Reading a valid git log should not return an error")
 	}
@@ -213,43 +213,43 @@ func testParse(t *testing.T, file string) {
 		t.Errorf("The total number of deletions should be %v and it was %v", totalDel, report.TotalDeletions)
 	}
 
-	if report.Contributors["Contributor3"].Commits != 1 {
+	if report.Contributors["Contributor3"].Contributions[0].Commits != 1 {
 		t.Errorf("Contributor3 should only have one commit")
 	}
 
-	if report.Contributors["Contributor1"].Commits != 6 {
+	if report.Contributors["Contributor1"].Contributions[0].Commits != 6 {
 		t.Errorf("Contributor1 should have 6 commits")
 	}
 
-	if report.Contributors["Contributor2"].Commits != 2 {
+	if report.Contributors["Contributor2"].Contributions[0].Commits != 2 {
 		t.Errorf("Contributor2 should have 2 commits")
 	}
 
-	if report.Contributors["Contributor3"].Additions != 1 {
+	if report.Contributors["Contributor3"].Contributions[0].Additions != 1 {
 		t.Errorf("Contributor3 should only have one addition")
 	}
 
-	if report.Contributors["Contributor3"].Deletions != 1 {
+	if report.Contributors["Contributor3"].Contributions[0].Deletions != 1 {
 		t.Errorf("Contributor3 should only have one deletion")
 	}
 
-	if report.Contributors["Contributor1"].Additions != 159 {
+	if report.Contributors["Contributor1"].Contributions[0].Additions != 159 {
 		t.Errorf("Contributor1 should have 159 additions")
 	}
 
-	if report.Contributors["Contributor1"].Deletions != 3 {
+	if report.Contributors["Contributor1"].Contributions[0].Deletions != 3 {
 		t.Errorf("Contributor1 should have 3 deletions")
 	}
 
-	if report.Contributors["Contributor2"].Additions != 29 {
+	if report.Contributors["Contributor2"].Contributions[0].Additions != 29 {
 		t.Errorf("Contributor2 should have 29 additions")
 	}
 
-	if report.Contributors["Contributor2"].Deletions != 4 {
+	if report.Contributors["Contributor2"].Contributions[0].Deletions != 4 {
 		t.Errorf("Contributor2 should have 4 deletions")
 	}
 
-	report, err = ParseStats(string(content), "/test")
+	report, err = ParseStats(string(content), "/test", *NewPeriodArray())
 	contributors = []string{"Contributor1", "Contributor2"}
 	if !CheckContributors(report, contributors) {
 		t.Errorf("There's at least a missing contributor in the output")
@@ -271,31 +271,31 @@ func testParse(t *testing.T, file string) {
 		t.Errorf("The total number of deletions should be %v and it was %v", totalDel, report.TotalDeletions)
 	}
 
-	if report.Contributors["Contributor2"].Commits != 2 {
+	if report.Contributors["Contributor2"].Contributions[0].Commits != 2 {
 		t.Errorf("Contributor3 should have 2 commits")
 	}
 
-	if report.Contributors["Contributor1"].Commits != 5 {
+	if report.Contributors["Contributor1"].Contributions[0].Commits != 5 {
 		t.Errorf("Contributor1 should have 5 commits")
 	}
 
-	if report.Contributors["Contributor1"].Additions != 147 {
+	if report.Contributors["Contributor1"].Contributions[0].Additions != 147 {
 		t.Errorf("Contributor1 should have 147 additions")
 	}
 
-	if report.Contributors["Contributor1"].Deletions != 0 {
+	if report.Contributors["Contributor1"].Contributions[0].Deletions != 0 {
 		t.Errorf("Contributor1 should have 0 deletions")
 	}
 
-	if report.Contributors["Contributor2"].Additions != 29 {
+	if report.Contributors["Contributor2"].Contributions[0].Additions != 29 {
 		t.Errorf("Contributor2 should have 29 additions")
 	}
 
-	if report.Contributors["Contributor2"].Deletions != 4 {
+	if report.Contributors["Contributor2"].Contributions[0].Deletions != 4 {
 		t.Errorf("Contributor2 should have 4 deletions")
 	}
 
-	report, err = ParseStats(string(content), "/tests")
+	report, err = ParseStats(string(content), "/tests", *NewPeriodArray())
 	if err != nil {
 		t.Errorf("%v", err)
 	}
