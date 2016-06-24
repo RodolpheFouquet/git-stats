@@ -23,13 +23,13 @@ subtree of the repository
 ```
 Usage:  /Users/tamareu/Code/git-stats/git-stats -repo=repo_path [options]
   -config string
-    	[optionnal] Path to the configuration file
+    	[optional] Path to the configuration file
   -help
-    	[optionnal] Displays this helps and quit
+    	[optional] Displays this helps and quit
   -repo string
     	[mandatory] Path to the git repository
   -subtree string
-    	[optionnal] Subtree you want to parse (default "/")
+    	[optional] Subtree you want to parse (default "/")
 ```
 
 ![Alt text](/screenshot.png?raw=true "Preview")

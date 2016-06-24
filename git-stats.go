@@ -284,9 +284,9 @@ func DecodeJson(jsonBlob []byte) (PeriodArray, error) {
 func main() {
 
 	directory := flag.String("repo", "", "[mandatory] Path to the git repository")
-	subtree := flag.String("subtree", "/", "[optionnal] Subtree you want to parse")
-	config := flag.String("config", "", "[optionnal] Path to the configuration file")
-	help := flag.Bool("help", false, "[optionnal] Displays this helps and quit")
+	subtree := flag.String("subtree", "/", "[optional] Subtree you want to parse")
+	config := flag.String("config", "", "[optional] Path to the configuration file")
+	help := flag.Bool("help", false, "[optional] Displays this helps and quit")
 	periods := *NewPeriodArray()
 
 	flag.Parse()
