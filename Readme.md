@@ -21,7 +21,7 @@ Dumps the number of additions and deletions from a repostory or a
 subtree of the repository
 
 ```
-Usage:  /Users/tamareu/Code/git-stats/git-stats --repo=repo_path [options]
+Usage:  /Users/tamareu/Code/git-stats/git-stats -repo=repo_path [options]
   -config string
     	[optionnal] Path to the configuration file
   -help
