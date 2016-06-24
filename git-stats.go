@@ -56,7 +56,7 @@ type PeriodArray struct {
 }
 
 func  IsAfter(t, other time.Time) bool {
-	return t.Unix() < other.Unix()
+	return t.Unix() <= other.Unix()
 }
 
 func NewPeriodTS(period Period) *PeriodTS {
@@ -65,7 +65,7 @@ func NewPeriodTS(period Period) *PeriodTS {
 		fmt.Println(chalk.Red, err)
 		return nil
 	}
-	stop, err := time.Parse("2006-01-02", period.Start)
+	stop, err := time.Parse("2006-01-02", period.End)
 	if err != nil {
 		fmt.Println(chalk.Red, err)
 		return nil
@@ -81,12 +81,27 @@ func NewContribution(name string) *Contribution{
 	return &Contribution{Additions: 0, Deletions: 0, Commits: 0, Name: name}
 }
 
-func NewContributionDate(name, start, end, alias string) *Contribution{
-	return &Contribution{Additions: 0, Deletions: 0, Commits: 0, Name: name}
+func NewContributionDate(name string,period PeriodTS) *Contribution{
+	formattedName := fmt.Sprintf("%v (%v)", name, period.Alias)
+	if period.Alias == "" {
+		formattedName = name
+	}
+	return &Contribution{Additions: 0, Deletions: 0, Commits: 0, Name: formattedName, StartDate: period.Start, EndDate: period.End}
 }
 
-func NewContributor(name string) *Contributor {
-	return &Contributor{Name: name, Contributions: []*Contribution{NewContribution(name)}}
+func NewContributor(name string, periods []PeriodTS) *Contributor {
+	
+	var contributions []*Contribution
+	if len(periods) > 0 {
+		contributions = append(contributions, NewContribution(fmt.Sprintf("%v %v", name, "(otherwise)"))) // otherwise
+		for _, period := range periods {
+			contributions = append(contributions, NewContributionDate(name, period)) 
+		}
+	} else {
+		contributions = []*Contribution{NewContribution(name)}
+	}
+	
+	return &Contributor{Name: name, Contributions: contributions}
 }
 
 func (c *Contribution) IncrementCounters(additions, deletions int) {
@@ -119,28 +134,44 @@ func (r *Report) HasContributor(name string) bool {
 	_, exists := r.Contributors[name]
 	return exists
 }
+func GetContribution(contributions []*Contribution, date time.Time) *Contribution {
+	var ret  *Contribution
+	if len(contributions) > 1 {
+		for _, contrib := range contributions {
+			if IsAfter(contrib.StartDate, date) && !IsAfter(contrib.EndDate, date) {
+				return contrib
+			}
+		}
+	} 
+	ret = contributions[0]
+	
+	return ret
+}
 
-func (r *Report) AddContributor(name string, periodMap map[string]PeriodTS, date time.Time) {
+func (r *Report) AddContributor(name string, periodMap map[string][]PeriodTS) {
 	if !r.HasContributor(name) {
-		r.Contributors[name] = NewContributor(name)
+		periods, _ := periodMap[name]
+		r.Contributors[name] = NewContributor(name, periods)
 	}
 }
 
-func (r *Report) IncrementCounters(name string, additions, deletions int, periodMap map[string]PeriodTS, date time.Time) error {
+func (r *Report) IncrementCounters(name string, additions, deletions int, date time.Time) error {
 	if !r.HasContributor(name) {
 		return errors.New("This contributor does not exist")
 	}
-	r.Contributors[name].Contributions[0].IncrementCounters(additions, deletions)
+	contrib := GetContribution(r.Contributors[name].Contributions, date)
+	contrib.IncrementCounters(additions, deletions)
 	r.TotalAdditions += additions
 	r.TotalDeletions += deletions
 	return nil
 }
 
-func (r *Report) IncrementCommits(name string, periodMap map[string]PeriodTS, date time.Time) error {
+func (r *Report) IncrementCommits(name string, date time.Time) error {
 	if !r.HasContributor(name) {
 		return errors.New("This contributor does not exist")
 	}
-	r.Contributors[name].Contributions[0].Commits++
+	contrib := GetContribution(r.Contributors[name].Contributions, date)
+	contrib.Commits++
 	r.TotalCommits++
 	return nil
 }
@@ -159,11 +190,12 @@ func ExecGit(repo string) (string, error) {
 }
 
 func ParseStats(gitOutput, subtree string, periods PeriodArray) (*Report, error) {
-	periodMap := make(map[string]PeriodTS)
+	periodMap := make(map[string][]PeriodTS)
 	for _, period := range periods.Periods {
-		periodMap[period.User] = *NewPeriodTS(period)
+		periodMap[period.User] = append(periodMap[period.User], *NewPeriodTS(period))
 	}
-	fmt.Println("Parsing the stats from the repo using %v as subtree", subtree)
+	fmt.Println(periodMap)
+	fmt.Println("Parsing the stats from the repo using ", subtree," as subtree" )
 	report := NewReport()
 	reader := bufio.NewReader(strings.NewReader(gitOutput))
 	currentContributor := ""
@@ -209,10 +241,10 @@ func ParseStats(gitOutput, subtree string, periods PeriodArray) (*Report, error)
 				
 			if !hasContributed {
 				hasContributed = true
-				report.AddContributor(currentContributor, periodMap, date)
-				report.IncrementCommits(currentContributor, periodMap, date)
+				report.AddContributor(currentContributor, periodMap)
+				report.IncrementCommits(currentContributor, date)
 			}
-			report.IncrementCounters(currentContributor, additions, deletions, periodMap, date)
+			report.IncrementCounters(currentContributor, additions, deletions, date)
 		}
 	}
 	return report, nil
@@ -296,12 +328,14 @@ func main() {
 	table.AddHeaders("Contributor", "Additions - Deletions", "Additions", "Commits", "Score")
 	contributors := make([]Contribution, 0)
 	for _, v := range report.Contributors {
-		if v.Contributions[0].Commits > 0 {
-			differenceScore := math.Abs(float64(v.Contributions[0].Additions-v.Contributions[0].Deletions)) * 100.0 / float64(report.TotalAdditions-report.TotalDeletions)
-			additionScore := float64(v.Contributions[0].Additions) * 100.0 / float64(report.TotalAdditions)
-			commitScore := float64(v.Contributions[0].Commits) * 100.0 / float64(report.TotalCommits)
-			v.Contributions[0].SetScores(differenceScore, additionScore, commitScore)
-			contributors = append(contributors, *(v.Contributions[0]))
+		for _, contribution := range v.Contributions {
+			if contribution.Commits > 0 {
+				differenceScore := math.Abs(float64(contribution.Additions-contribution.Deletions)) * 100.0 / float64(report.TotalAdditions-report.TotalDeletions)
+				additionScore := float64(contribution.Additions) * 100.0 / float64(report.TotalAdditions)
+				commitScore := float64(contribution.Commits) * 100.0 / float64(report.TotalCommits)
+				contribution.SetScores(differenceScore, additionScore, commitScore)
+				contributors = append(contributors, *(contribution))
+			}
 		}
 	}
 	sort.Sort(OrderByScore(contributors))

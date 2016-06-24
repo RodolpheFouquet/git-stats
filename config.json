@@ -1,0 +1,14 @@
+{
+  "periods": [
+    { "user": "Romain Bouqueau",
+      "start": "2007-05-24",
+      "end": "2012-05-25",
+      "alias": "working at telecom"
+    },
+   { "user": "Romain Bouqueau",
+      "start": "2012-05-26",
+      "end": "2015-05-30",
+      "alias": "working with unicorn superpowers, lasers and stuff"
+    }
+  ]
+}

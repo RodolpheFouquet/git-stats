@@ -7,7 +7,7 @@ import (
 )
 
 func TestIncrementCounters(t *testing.T) {
-	c := NewContributor("dummy")
+	c := NewContributor("dummy", []PeriodTS{})
 
 	c.Contributions[0].IncrementCounters(1, 1)
 
@@ -33,7 +33,7 @@ func TestIncrementCounters(t *testing.T) {
 }
 
 func TestNewContributor(t *testing.T) {
-	c := NewContributor("Pouet")
+	c := NewContributor("Pouet", []PeriodTS{})
 
 	if c.Contributions[0].Name != "Pouet" {
 		t.Errorf("The expected name was Pouet, however we got %v", c.Contributions[0].Name)
@@ -41,7 +41,7 @@ func TestNewContributor(t *testing.T) {
 }
 
 func TestSetScores(t *testing.T) {
-	c := NewContributor("")
+	c := NewContributor("", []PeriodTS{})
 
 	var diffScore, addScore, commitScore float64
 	diffScore = 80
@@ -56,7 +56,7 @@ func TestSetScores(t *testing.T) {
 }
 
 func TestGetScores(t *testing.T) {
-	c := NewContributor("")
+	c := NewContributor("", []PeriodTS{})
 
 	c.Contributions[0].SetScores(80.0, 10.0, 50.0)
 	expectedScore := c.Contributions[0].DifferenceScore*0.8 + c.Contributions[0].AdditionScore*0.1 + c.Contributions[0].CommitScore*0.1
@@ -73,7 +73,7 @@ func TestHasContributor(t *testing.T) {
 		t.Errorf("The report shouldn't have any contributor")
 	}
 
-	report.AddContributor(name,make(map[string]PeriodTS), time.Now())
+	report.AddContributor(name,make(map[string][]PeriodTS))
 	if !report.HasContributor(name) {
 		t.Errorf("The report should have the contributor %v", name)
 	}
@@ -87,15 +87,15 @@ func TestHasContributor(t *testing.T) {
 func TestIncrementReportCounters(t *testing.T) {
 	r := NewReport()
 	name := "Pouet"
-	err := r.IncrementCounters(name, 0, 0, make(map[string]PeriodTS), time.Now())
+	err := r.IncrementCounters(name, 0, 0, time.Now())
 
 	if err == nil {
 		t.Errorf("Incrementing a counter on a non existing contributor should return a valid error")
 	}
 
-	r.AddContributor(name, make(map[string]PeriodTS), time.Now())
+	r.AddContributor(name, make(map[string][]PeriodTS))
 	c := r.Contributors[name]
-	err = r.IncrementCounters(name, 0, 0, make(map[string]PeriodTS), time.Now())
+	err = r.IncrementCounters(name, 0, 0, time.Now())
 	if err != nil {
 		t.Errorf("Incrementing a counter on a valid contributor should not return an error")
 	}
@@ -109,7 +109,7 @@ func TestIncrementReportCounters(t *testing.T) {
 
 	addDiff := 10
 	delDiff := 9
-	r.IncrementCounters(name, addDiff, delDiff, make(map[string]PeriodTS), time.Now())
+	r.IncrementCounters(name, addDiff, delDiff, time.Now())
 	if c.Contributions[0].Additions != addDiff || c.Contributions[0].Deletions != delDiff {
 		t.Errorf("Contributor Additions and Deletions should be equal to %v and %v", addDiff, delDiff)
 	}
@@ -119,9 +119,9 @@ func TestIncrementReportCounters(t *testing.T) {
 	}
 
 	name2 := "Pouetpouet"
-	r.AddContributor(name2, make(map[string]PeriodTS), time.Now())
+	r.AddContributor(name2, make(map[string][]PeriodTS))
 	c2 := r.Contributors[name2]
-	r.IncrementCounters(name2, addDiff, delDiff, make(map[string]PeriodTS), time.Now())
+	r.IncrementCounters(name2, addDiff, delDiff, time.Now())
 	if c2.Contributions[0].Additions != addDiff || c2.Contributions[0].Deletions != delDiff {
 		t.Errorf("Contributor Additions and Deletions should be equal to %v and %v", addDiff, delDiff)
 	}
@@ -139,14 +139,14 @@ func TestIncrementCommit(t *testing.T) {
 
 	name := "Pouet"
 	name2 := "Pouetpouet"
-	err := r.IncrementCommits(name, make(map[string]PeriodTS), time.Now())
+	err := r.IncrementCommits(name, time.Now())
 	if err == nil {
 		t.Errorf("Incrementing the commits of a non existing user should fail")
 	}
 
-	r.AddContributor(name, make(map[string]PeriodTS), time.Now())
+	r.AddContributor(name, make(map[string][]PeriodTS))
 	c := r.Contributors[name]
-	err = r.IncrementCommits(name, make(map[string]PeriodTS), time.Now())
+	err = r.IncrementCommits(name, time.Now())
 	if err != nil {
 		t.Errorf("Incrementing the commits of an existing user should not fail")
 	}
@@ -159,9 +159,9 @@ func TestIncrementCommit(t *testing.T) {
 		t.Errorf("The total number of commits should have been incremented")
 	}
 
-	r.AddContributor(name2, make(map[string]PeriodTS), time.Now())
+	r.AddContributor(name2, make(map[string][]PeriodTS))
 	c2 := r.Contributors[name2]
-	r.IncrementCommits(name2, make(map[string]PeriodTS), time.Now())
+	r.IncrementCommits(name2, time.Now())
 	if c2.Contributions[0].Commits != 1 {
 		t.Errorf("Failed to increment the contributor's commits")
 	}
