@@ -194,7 +194,6 @@ func ParseStats(gitOutput, subtree string, periods PeriodArray) (*Report, error)
 	for _, period := range periods.Periods {
 		periodMap[period.User] = append(periodMap[period.User], *NewPeriodTS(period))
 	}
-	fmt.Println(periodMap)
 	fmt.Println("Parsing the stats from the repo using ", subtree," as subtree" )
 	report := NewReport()
 	reader := bufio.NewReader(strings.NewReader(gitOutput))

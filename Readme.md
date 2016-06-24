@@ -21,9 +21,15 @@ Dumps the number of additions and deletions from a repostory or a
 subtree of the repository
 
 ```
-Usage:  git-stats repo_path subtree
-Example:  git-stats repo_path  / will  give the stats for the whole repository
-          git-stats repo_path /module1/src  will give the stats for the module1/src subpath
+Usage:  /Users/tamareu/Code/git-stats/git-stats --repo=repo_path [options]
+  -config string
+    	[optionnal] Path to the configuration file
+  -help
+    	[optionnal] Displays this helps and quit
+  -repo string
+    	[mandatory] Path to the git repository
+  -subtree string
+    	[optionnal] Subtree you want to parse (default "/")
 ```
 
 ![Alt text](/screenshot.png?raw=true "Preview")
