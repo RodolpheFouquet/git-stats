@@ -1,14 +1,28 @@
 {
   "periods": [
     { "user": "Romain Bouqueau",
-      "start": "2007-05-24",
+      "start": "2000-01-01",
       "end": "2012-05-25",
       "alias": "working at telecom"
     },
-   { "user": "Romain Bouqueau",
-      "start": "2012-05-26",
-      "end": "2015-05-30",
-      "alias": "working with unicorn superpowers, lasers and stuff"
+    { "user": "Romain Bouqueau",
+      "start": "2012-05-24",
+      "end": "2099-12-31",
+      "alias": "working at Motion Spell"
+    }
+  ],
+  "users": [
+    { "alias": "jeanlf",
+      "name": "Jean Le Feuvre"
+    },
+    { "alias": "cconcolato",
+      "name": "Cyril Concolato"
+    },
+    { "alias": "NicolasDEROUINEAU",
+      "name": "Nicolas Derouineau"
+    },
+    { "alias": "Nicolas DEROUINEAU",
+      "name": "Nicolas Derouineau"
     }
   ]
 }
