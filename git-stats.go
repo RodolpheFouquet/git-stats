@@ -275,11 +275,11 @@ func ParseStats(gitOutput, subtree string, periods PeriodArray, users UserArray)
 
 			additions, err := strconv.Atoi(splittedLine[0])
 			if err != nil {
-				continue
+				additions = 0
 			}
 			deletions, err := strconv.Atoi(splittedLine[1])
 			if err != nil {
-				continue
+				deletions = 0
 			}
 			
 			date,_ := time.Parse("Mon Jan 2 15:04:05 2006 -0700", timeString)
@@ -290,6 +290,8 @@ func ParseStats(gitOutput, subtree string, periods PeriodArray, users UserArray)
 				report.IncrementCommits(currentContributor, date)
 			}
 			report.IncrementCounters(currentContributor, additions, deletions, date)
+		} else {
+			fmt.Println(chalk.Yellow, "Error: unprocessed line: ", lineString)
 		}
 	}
 	return report, nil
