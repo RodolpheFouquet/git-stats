@@ -110,7 +110,12 @@ func (c *Contribution) IncrementCounters(additions, deletions int) {
 }
 
 func (c *Contribution) GetScore() float64 {
-	return 0.8*c.DifferenceScore + 0.1*c.AdditionScore + 0.1*c.CommitScore
+	threshold := 0.08
+	score := 0.7*c.DifferenceScore + 0.15*c.AdditionScore + 0.15*c.CommitScore
+	if (score < threshold) {
+		score = 0.0
+	}
+	return score
 }
 
 func (c *Contribution) SetScores(difference, addition, commits float64) {
@@ -124,10 +129,11 @@ type Report struct {
 	TotalAdditions int
 	TotalDeletions int
 	TotalCommits   int
+	TotalScore     float64
 }
 
 func NewReport() *Report {
-	return &Report{Contributors: make(map[string]*Contributor), TotalAdditions: 0, TotalDeletions: 0, TotalCommits: 0}
+	return &Report{Contributors: make(map[string]*Contributor), TotalAdditions: 0, TotalDeletions: 0, TotalCommits: 0, TotalScore: 0.0}
 }
 
 func (r *Report) HasContributor(name string) bool {
@@ -157,6 +163,7 @@ func (r *Report) AddContributor(name string, periodMap map[string][]PeriodTS) {
 
 func (r *Report) IncrementCounters(name string, additions, deletions int, date time.Time) error {
 	if !r.HasContributor(name) {
+		fmt.Println("This contributor does not exist: ", r.Contributors[name] )
 		return errors.New("This contributor does not exist")
 	}
 	contrib := GetContribution(r.Contributors[name].Contributions, date)
@@ -168,6 +175,7 @@ func (r *Report) IncrementCounters(name string, additions, deletions int, date t
 
 func (r *Report) IncrementCommits(name string, date time.Time) error {
 	if !r.HasContributor(name) {
+		fmt.Println("This contributor does not exist: ", r.Contributors[name] )
 		return errors.New("This contributor does not exist")
 	}
 	contrib := GetContribution(r.Contributors[name].Contributions, date)
@@ -329,22 +337,26 @@ func main() {
 	for _, v := range report.Contributors {
 		for _, contribution := range v.Contributions {
 			if contribution.Commits > 0 {
-				differenceScore := math.Abs(float64(contribution.Additions-contribution.Deletions)) * 100.0 / float64(report.TotalAdditions-report.TotalDeletions)
+				decreaseFactor := 3.0
+				differenceScore := math.Max(float64(contribution.Additions-contribution.Deletions), float64(contribution.Deletions-contribution.Additions) / decreaseFactor) * 100.0 / float64(report.TotalAdditions-report.TotalDeletions)
 				additionScore := float64(contribution.Additions) * 100.0 / float64(report.TotalAdditions)
 				commitScore := float64(contribution.Commits) * 100.0 / float64(report.TotalCommits)
 				contribution.SetScores(differenceScore, additionScore, commitScore)
 				contributors = append(contributors, *(contribution))
+				report.TotalScore += contribution.GetScore()
 			}
 		}
 	}
 	sort.Sort(OrderByScore(contributors))
 	for index := range contributors {
 		c := contributors[len(contributors)-index-1]
-		table.AddRow(c.Name, fmt.Sprintf("%.3f%%", c.DifferenceScore), fmt.Sprintf("%.3f%%", c.AdditionScore), fmt.Sprintf("%.3f%%", c.CommitScore), fmt.Sprintf("%.3f", c.GetScore()))
+		if (c.GetScore() > 0) { // hide micro-contributors
+			table.AddRow(c.Name, fmt.Sprintf("%.3f%%", c.DifferenceScore), fmt.Sprintf("%.3f%%", c.AdditionScore), fmt.Sprintf("%.3f%%", c.CommitScore), fmt.Sprintf("%.3f", c.GetScore() * 100.0 / report.TotalScore))
+		}
 	}
 
 	table.AddSeparator()
-	table.AddRow("Total", report.TotalAdditions, report.TotalDeletions, report.TotalCommits, "-----")
+	table.AddRow("Total", report.TotalAdditions, report.TotalDeletions, report.TotalCommits, "100.0")
 	table.SetAlign(3, 2)
 	table.SetAlign(3, 3)
 	table.SetAlign(3, 4)
