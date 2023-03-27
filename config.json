@@ -15,6 +15,9 @@
     { "alias": "jeanlf",
       "name": "Jean Le Feuvre"
     },
+    { "alias": "lefeuvre",
+      "name": "Jean Le Feuvre"
+    },
     { "alias": "cconcolato",
       "name": "Cyril Concolato"
     },
@@ -23,6 +26,34 @@
     },
     { "alias": "Nicolas DEROUINEAU",
       "name": "Nicolas Derouineau"
+    },
+    {
+      "alias": "Aurelien David",
+      "name": "Aurélien David"
+    },
+    {
+      "alias": "adavid",
+      "name": "Aurélien David"
+    },
+    {
+      "alias": "super",
+      "name": ""
+    },
+    {
+      "alias": "unknown",
+      "name": ""
+    },
+    {
+      "alias": "gpacvm-win64",
+      "name": ""
+    },
+    {
+      "alias": "enstdevs",
+      "name": ""
+    },
+    {
+      "alias": "buildworker-ubuntu64",
+      "name": ""
     }
   ]
 }

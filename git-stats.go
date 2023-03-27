@@ -137,7 +137,7 @@ func (c *Contribution) IncrementCounters(additions, deletions int) {
 }
 
 func (c *Contribution) GetScore() float64 {
-	threshold := 0.08
+	threshold := 0.075
 	score := 0.7*c.DifferenceScore + 0.15*c.AdditionScore + 0.15*c.CommitScore
 	if (score < threshold) {
 		score = 0.0
@@ -212,30 +212,17 @@ func (r *Report) IncrementCommits(name string, date time.Time) error {
 	return nil
 }
 
-func ExecGit(repo string) (string, error) {
+func ExecGitHistory(repo string) (string, error) {
 	command := exec.Command("git", "-C", repo, "log", "--numstat", "--pretty='%an|%ad'")
-	fmt.Println("Gathering the stats in the repo", repo)
+	fmt.Println("Gathering the stats in the repo (1/3)", repo)
 	out, err := command.CombinedOutput()
-	if err != nil {
-		return "", err
-	}
 	if err != nil {
 		return "", err
 	}
 	return string(out), nil
 }
 
-func ParseStats(gitOutput, subtree string, periods PeriodArray, users UserArray) (*Report, error) {
-	periodMap := make(map[string][]PeriodTS)
-	for _, period := range periods.Periods {
-		periodMap[period.User] = append(periodMap[period.User], *NewPeriodTS(period))
-	}
-	userMap := make(map[string]string)
-	for _, user := range users.Users {
-		userMap[user.Alias] = user.Name
-	}
-	fmt.Println("Parsing the stats from the repo using ", subtree," as subtree" )
-	report := NewReport()
+func parseGitOutputHistory(gitOutput string, report *Report, subtree string, periodMap map[string][]PeriodTS, userMap map[string]string) {
 	reader := bufio.NewReader(strings.NewReader(gitOutput))
 	currentContributor := ""
 	var timeString string
@@ -258,6 +245,10 @@ func ParseStats(gitOutput, subtree string, periods PeriodArray, users UserArray)
 			_, exists := userMap[alias]
 			if exists {
 				currentContributor = userMap[alias]
+				if (currentContributor == "") {
+					fmt.Println(chalk.Yellow, "Skip user: ", alias)
+					continue
+				}
 			} else {
 				currentContributor = alias
 			}
@@ -291,9 +282,95 @@ func ParseStats(gitOutput, subtree string, periods PeriodArray, users UserArray)
 			}
 			report.IncrementCounters(currentContributor, additions, deletions, date)
 		} else {
-			fmt.Println(chalk.Yellow, "Error: unprocessed line: ", lineString)
+			fmt.Println(chalk.Yellow, "Error: unprocessed line (history): ", lineString)
 		}
 	}
+}
+
+func parseGitOutputBlame(gitOutput string, report *Report, userMap map[string]string) {
+	reader := bufio.NewReader(strings.NewReader(gitOutput))
+	currentContributor := ""
+	var timeString string
+	for {
+		line, _, err := reader.ReadLine()
+		if err != nil {
+			break
+		}
+		lineString := string(line)
+		if len(string(line)) == 0 {
+			continue
+		}
+
+		splittedLine := strings.Split(strings.Trim(lineString, " "), " ")
+
+		if len(splittedLine) >= 3 {
+			alias := strings.Join(splittedLine[2:], " ")
+			_, exists := userMap[alias]
+			if exists {
+				currentContributor = userMap[alias]
+				if (currentContributor == "") {
+					fmt.Println(chalk.Yellow, "Skip user: ", alias)
+					continue
+				}
+			} else {
+				currentContributor = alias
+			}
+
+			additions, err := strconv.Atoi(splittedLine[0])
+			if err != nil {
+				fmt.Println(chalk.Yellow, "Skip blame contribution: ", lineString)
+				additions = 0
+			}
+
+			//increment as additions
+			date,_ := time.Parse("Mon Jan 2 15:04:05 2023 -0700", timeString)
+			factor := 1
+			report.IncrementCounters(currentContributor, additions * factor, 0, date)
+		} else {
+			fmt.Println(chalk.Yellow, "Error: unprocessed line (blame): ", len(splittedLine), lineString)
+		}
+	}
+}
+
+func ExecGitBlameRaw(repo string) (string, error) {
+	cmdGit := "git ls-tree -r -z --name-only HEAD -- | grep -z -Z -v extra_lib | sed 's/^/.\\//' | xargs -0 -n1 git blame --line-porcelain HEAD |grep -ae \"^author \"|sort|uniq -c|sort -nr"
+	command := exec.Command("bash", "-c", cmdGit)
+	command.Dir = repo
+	out, err := command.CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}
+
+func ExecGitBlameSelected(repo string) (string, error) {
+	cmdGit := "git ls-tree --name-only -z -r HEAD|egrep -z -Z -E 'configure|Makefile|\\.(h|cpp|c|js)$'|grep -z -Z -v extra_lib|xargs -0 -n1 git blame --line-porcelain|grep \"^author \"|sort|uniq -c|sort -nr"
+	command := exec.Command("bash", "-c", cmdGit)
+	command.Dir = repo
+	fmt.Println("Gathering the stats in the repo (3/3)", repo)
+	out, err := command.CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}
+
+func ParseStats(gitOutput1 string, gitOutput2 string, gitOutput3 string, subtree string, periods PeriodArray, users UserArray) (*Report, error) {
+	periodMap := make(map[string][]PeriodTS)
+	for _, period := range periods.Periods {
+		periodMap[period.User] = append(periodMap[period.User], *NewPeriodTS(period))
+	}
+	userMap := make(map[string]string)
+	for _, user := range users.Users {
+		userMap[user.Alias] = user.Name
+	}
+	fmt.Println("Parsing the stats from the repo using ", subtree," as subtree" )
+	report := NewReport()
+
+	parseGitOutputHistory(gitOutput1, report, subtree, periodMap, userMap)
+	parseGitOutputBlame(gitOutput2, report, userMap)
+	parseGitOutputBlame(gitOutput3, report, userMap)
+
 	return report, nil
 }
 
@@ -363,13 +440,25 @@ func main() {
 		}
 	}
 
-	gitOutput, err := ExecGit(*directory)
+	gitOutputHistory, err := ExecGitHistory(*directory)
 	if err != nil {
 		fmt.Println(chalk.Red, err)
 		os.Exit(1)
 	}
 
-	report, err := ParseStats(gitOutput, *subtree, periods, users)
+	gitOutputBlameRaw, err := ExecGitBlameRaw(*directory)
+	if err != nil {
+		fmt.Println(chalk.Red, err)
+		os.Exit(1)
+	}
+
+	gitOutputBlameSelected, err := ExecGitBlameSelected(*directory)
+	if err != nil {
+		fmt.Println(chalk.Red, err)
+		os.Exit(1)
+	}
+
+	report, err := ParseStats(gitOutputHistory, gitOutputBlameRaw, gitOutputBlameSelected, *subtree, periods, users)
 
 	separator := strings.Repeat("#", 80)
 	fmt.Println(chalk.Green, separator)
